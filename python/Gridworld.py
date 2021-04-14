@@ -56,7 +56,7 @@ class Gridworld:
     '''
     def move(self, action):
         if action < 0 or action > 3:
-            print("[Gridworld] action is {}, but should be 0, 1, 2 or 3".format(len(rewards), length**2))
+            print("[Gridworld] action is {}, but should be 0, 1, 2 or 3".format(action))
         
         u = np.random.uniform(0.0, 1.0, 1)
         if u <= self.noise:
@@ -102,12 +102,14 @@ class Gridworld:
     def isTerminal(self):
         stateIdx = self.position[1]*self.length+self.position[0]
         isTerminal = self.terminal[stateIdx]
-        return isTerminal
+        return 0
+        #return isTerminal
 
     def getTerminationAtPosition(self, position):
         stateIdx = position[1]*self.length+position[0]
         isTerminal = self.terminal[stateIdx]
-        return isTerminal
+        return 0
+        #return isTerminal
 
 
 
@@ -136,7 +138,7 @@ if __name__ == "__main__":
     print("Current Position: {}".format(world.position))
 
     print("Perform Value Iteration..")
-    valueMatrix, policyMatrix = helpers.doValueIteration(world, 1e-3, 1e4)
+    valueMatrix, policyMatrix = helpers.doValueIteration(world, 1e-3, 1e3)
 
     print("Policy Matrix:")
     print(policyMatrix)
@@ -145,7 +147,7 @@ if __name__ == "__main__":
 
 
     print("Do Rollout..")
-    rollout = helpers.doRollout(world, policyMatrix)
+    rollout = helpers.doRollout(world, policyMatrix, 2*N)
     print("State List:")
     print(rollout)
 

@@ -8,7 +8,7 @@ def createSinkReward(gridLength, maxval):
     return rewards, terminal
 
 
-def doValueIteration(gridworld, eps, maxsteps):
+def doValueIteration(gridworld, eps, maxsteps, noisy=False):
     N = gridworld.length
     p = gridworld.noise
     gamma = gridworld.discount
@@ -32,7 +32,6 @@ def doValueIteration(gridworld, eps, maxsteps):
                 # Check status of state
 
                 isTerminal = gridworld.getTerminationAtPosition([x,y])
-
                 if isTerminal:
                     policyMatrix[(x,y)] = -1
                     valueMatrixCopy[(x,y)] = gridworld.getRewardAtPosition([x,y])
@@ -80,26 +79,37 @@ def doValueIteration(gridworld, eps, maxsteps):
         diffMatrix = abs(valueMatrixCopy - valueMatrix)
         maxDiffNorm = diffMatrix.max()
 
-        print("Iteration {}: max abs diff {}".format(it, maxDiffNorm))
+        if noisy:
+            print("Iteration {}: max abs diff {}".format(it, maxDiffNorm))
         valueMatrix = valueMatrixCopy.copy()
         it += 1
 
     return valueMatrix, policyMatrix
 
 
-def doRollout(gridworld, policy):
+def doRollout(gridworld, policy, maxsteps):
     gridworld.setPosition(0,0)
     isTerminal = gridworld.isTerminal()
     currentPosition = gridworld.getPosition()
     stateList = [currentPosition]
-    while isTerminal == 0:
+    step = 0
+    while isTerminal == 0 and step < maxsteps:
         action = policy[ tuple(currentPosition) ]
         gridworld.move(action)
         currentPosition = gridworld.getPosition()
         isTerminal = gridworld.isTerminal()
         stateList.append(currentPosition)
+        step += 1
 
     return stateList
+
+def doRolloutNoNoise(gridworld, policy, maxsteps):
+    noise = gridworld.noise
+    gridworld.noise = 0.0
+    stateList = doRollout(gridworld, policy, maxsteps)
+    gridworld.noise = noise
+    return stateList
+
 
 def createStateVectoView(gridworld, stateList):
     N = gridworld.length
