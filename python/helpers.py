@@ -1,10 +1,11 @@
 import numpy as np
+from scipy.stats import norm
 
 def createSinkReward(gridLength, maxval):
-    rewards = np.zeros(gridLength**2)
-    rewards[-1] = maxval
-    terminal = np.zeros(gridLength**2)
-    terminal[-1] = 1
+    rewards = np.zeros((gridLength, gridLength))
+    rewards[gridLength-1, gridLength-1] = maxval
+    terminal = np.zeros((gridLength, gridLength))
+    terminal[gridLength-1, gridLength-1] = 1
     return rewards, terminal
 
 
@@ -81,6 +82,7 @@ def doValueIteration(gridworld, eps, maxsteps, noisy=False):
 
         if noisy:
             print("Iteration {}: max abs diff {}".format(it, maxDiffNorm))
+        
         valueMatrix = valueMatrixCopy.copy()
         it += 1
 
@@ -94,7 +96,8 @@ def doRollout(gridworld, policy, maxsteps):
     stateList = [currentPosition]
     step = 0
     while isTerminal == 0 and step < maxsteps:
-        action = policy[ tuple(currentPosition) ]
+        x,y = tuple(currentPosition)
+        action = policy[ (x,y) ]
         gridworld.move(action)
         currentPosition = gridworld.getPosition()
         isTerminal = gridworld.isTerminal()
@@ -111,12 +114,22 @@ def doRolloutNoNoise(gridworld, policy, maxsteps):
     return stateList
 
 
-def createStateVectoView(gridworld, stateList):
+def createStateVectorView(gridworld, stateList):
     N = gridworld.length
     gamma = gridworld.discount
     stateVectorView = np.zeros(N**2)
     for idx, state in enumerate(stateList):
-        stateIdx = state[1]*N+state[0]
+        stateIdx = state[0]+state[1]*N
         stateVectorView[stateIdx] += gamma**idx
+
+    return stateVectorView
+
+def createStateMatrixView(gridworld, stateList):
+    N = gridworld.length
+    gamma = gridworld.discount
+    stateVectorView = np.zeros((N,N))
+    for idx, state in enumerate(stateList):
+        x,y = tuple(state)
+        stateVectorView[x,y] += gamma**idx
 
     return stateVectorView

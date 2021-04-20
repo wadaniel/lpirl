@@ -3,9 +3,9 @@ import numpy as np
 
 import helpers
 """
-        [   ..    ..  (N-1,N-1) ]
+        [ (0,0)   ..    (0,N-1) ]
         [   ..    ..      ..    ]
-        [ (0,0)   ..      ..    ]
+        [ (N-1,0) ..      ..    ]
 """
  
 class Gridworld:
@@ -14,6 +14,7 @@ class Gridworld:
     @param self: Gridworld instance
     @param length: length of side of quadratic gridwold
     @param noise: probability of random action
+    @param discount: discount factor
     @param rewards: vector of rewards of states
     @param terminal: (0,1) vector indicating terminal states
     '''
@@ -28,16 +29,16 @@ class Gridworld:
         else:
             print("[Gridworld] length must be larger 0, is {}".format(length))
 
-        if len(rewards) == length**2:
+        if rewards.shape == (length,length):
             self.rewards = rewards
         else:
-            print("[Gridworld] rewards are of length {}, but should be {}".format(len(rewards), length**2))
+            print("[Gridworld] rewards are of shape {}, but should be {}".format(rewards.shape, (length,length)))
             sys.exit()
   
-        if len(terminal) == length**2:
+        if terminal.shape == (length, length):
             self.terminal = terminal
         else:
-            print("[Gridworld] terminal are of length {}, but should be {}".format(len(terminal), length**2))
+            print("[Gridworld] terminal are of shape {}, but should be {}".format(terminal.shape, (length, length)))
             sys.exit()
   
     def getPosition(self):
@@ -74,49 +75,44 @@ class Gridworld:
 
     def moveLeft(self):
         if self.position[0] > 0:
-            self.position[0] = self.position[0] - 1
+            self.position[0] -= 1
  
     def moveRight(self):
         if self.position[0] < self.length-1:
-            self.position[0] = self.position[0] + 1
- 
+            self.position[0] += 1
     
     def moveUp(self):
         if self.position[1] < self.length-1:
-            self.position[1] = self.position[1] + 1
+            self.position[1] += 1
     
     def moveDown(self):
         if self.position[1] > 0:
-            self.position[1] = self.position[1] - 1
+            self.position[1] -= 1
  
     def getReward(self):
-        rewardIdx = self.position[1]*self.length+self.position[0]
-        reward = self.rewards[rewardIdx]
+        reward = self.rewards[tuple(self.position)]
         return reward
  
     def getRewardAtPosition(self, position):
-        stateIdx = position[1]*self.length+position[0]
-        reward = self.rewards[stateIdx]
+        reward = self.rewards[tuple(position)]
         return reward
 
     def isTerminal(self):
-        stateIdx = self.position[1]*self.length+self.position[0]
-        isTerminal = self.terminal[stateIdx]
-        return 0
-        #return isTerminal
+        isTerminal = self.terminal[tuple(self.position)]
+        #return 0
+        return isTerminal
 
     def getTerminationAtPosition(self, position):
-        stateIdx = position[1]*self.length+position[0]
-        isTerminal = self.terminal[stateIdx]
-        return 0
-        #return isTerminal
+        isTerminal = self.terminal[tuple(position)]
+        #return 0
+        return isTerminal
 
 
 
 if __name__ == "__main__":
 
     N = 5
-    p = 0.3
+    p = 0.0
     rewards, terminal = helpers.createSinkReward(N, 10)
     
     print("Creating Gridworld ..")
@@ -140,19 +136,26 @@ if __name__ == "__main__":
     print("Perform Value Iteration..")
     valueMatrix, policyMatrix = helpers.doValueIteration(world, 1e-3, 1e3)
 
-    print("Policy Matrix:")
-    print(policyMatrix)
+    print("Reward Matrix:")
+    print(rewards)
     print("Value Matrix:")
     print(valueMatrix)
-
+    print("Policy Matrix:")
+    print(policyMatrix)
+ 
 
     print("Do Rollout..")
-    rollout = helpers.doRollout(world, policyMatrix, 2*N)
+    rollout = helpers.doRollout(world, policyMatrix, 2*N-1)
     print("State List:")
     print(rollout)
 
-    stateVectorView = helpers.createStateVectoView(world, rollout)
+    stateVectorView = helpers.createStateVectorView(world, rollout)
     print("State Vector View:")
     print(stateVectorView)
+ 
+    stateMatrixView = helpers.createStateMatrixView(world, rollout)
+    print("State Matrix View:")
+    print(stateMatrixView)
+
 
     print("Exit..")

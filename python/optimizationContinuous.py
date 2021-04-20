@@ -10,15 +10,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--iteration', type=int, default=1, help='number irl iterations')
-    parser.add_argument('--length', type=int, default=5, help='length of Gridworld')
     parser.add_argument('--discount', type=float, default=0.99, help='discount factor')
     parser.add_argument('--noise', type=float, default=0.3, help='action noise')
+    parser.add_argument('--discretization', type=float, default=5, help='action noise')
     parser.add_argument('--numobs', type=int, default=1, help='number observed expert trajectories')
     parser.add_argument('--seed', type=int, default=1337, help='random seed')
 
     args = parser.parse_args()
 
-    N = args.length
+    N = args.discretization
     p = args.noise
     gamma = args.discount
     maxiterations = args.iteration
@@ -28,15 +28,16 @@ if __name__ == "__main__":
 
     np.random.seed(args.seed)
 
-    # create rewards
+    # create reward quadrant
 
-    rewards, terminal = helpers.createSinkReward(N, 1)
+    rewards = np.array([[0.8, 0.8], [1.0, 1.0]])
     
     # find optimal policy
 
-    world = Gridworld(length=N, noise=p, discount=gamma, rewards=rewards, terminal=terminal)
-    valueMatrix, policyMatrix = helpers.doValueIteration(world, 1e-3, 1e4)
+    world = ContinuousGridworld(length=1.0, stepsize=0.2, discretization=N, noise=noise, discount=discount, rewards=rewards)
+    valueMatrix, policyMatrix = helpers.doDiscretizedValueIteration(world, 1e-3, 1e4)
  
+    sys.exit()
     rollout = helpers.doRolloutNoNoise(world, policyMatrix, 2*N-1)
     stateVectorView = helpers.createStateVectorView(world, rollout)
     stateMatrixView = helpers.createStateMatrixView(world, rollout)
