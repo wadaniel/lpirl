@@ -1,5 +1,5 @@
-from Gridworld import *
-import helpers
+from ContinuousGridworld import *
+import helpersContinuous
 
 from scipy.optimize import linprog
 import numpy as np
@@ -10,12 +10,16 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--iteration', type=int, default=1, help='number irl iterations')
-    parser.add_argument('--discount', type=float, default=0.99, help='discount factor')
+    parser.add_argument('--discount', type=float, default=0.90, help='discount factor')
     parser.add_argument('--noise', type=float, default=0.3, help='action noise')
-    parser.add_argument('--discretization', type=float, default=5, help='action noise')
+    parser.add_argument('--epsilon', type=float, default=0.01, help='accuracy of value iteration')
+    parser.add_argument('--discretization', type=int, default=5, help='action noise')
     parser.add_argument('--numobs', type=int, default=1, help='number observed expert trajectories')
     parser.add_argument('--seed', type=int, default=1337, help='random seed')
+    parser.add_argument('--noisy', action='store_true', help='print output from value iteration')
 
+    ## Parse arguments
+    
     args = parser.parse_args()
 
     N = args.discretization
@@ -23,6 +27,8 @@ if __name__ == "__main__":
     gamma = args.discount
     maxiterations = args.iteration
     numobs = args.numobs
+    epsilon = args.epsilon
+    noisy = args.noisy
 
     ## Initialization
 
@@ -34,44 +40,44 @@ if __name__ == "__main__":
     
     # find optimal policy
 
-    world = ContinuousGridworld(length=1.0, stepsize=0.2, discretization=N, noise=noise, discount=discount, rewards=rewards)
-    valueMatrix, policyMatrix = helpers.doDiscretizedValueIteration(world, 1e-3, 1e4)
- 
-    sys.exit()
-    rollout = helpers.doRolloutNoNoise(world, policyMatrix, 2*N-1)
-    stateVectorView = helpers.createStateVectorView(world, rollout)
-    stateMatrixView = helpers.createStateMatrixView(world, rollout)
- 
-    for i in range(numobs-1):
-        rollout = helpers.doRollout(world, policyMatrix, 2*N-1)
-        stateVectorView += helpers.createStateVectorView(world, rollout)
+    world = ContinuousGridworld(length=1.0, stepsize=0.2, discretization=N, noise=p, discount=gamma, rewards=rewards)
+    valueMatrix, policyMatrix = helpersContinuous.doDiscretizedValueIteration(world, epsilon, 1e4, noisy=noisy)
  
     print(valueMatrix)
     print(policyMatrix)
-    print(stateVectorView)
-    print(stateMatrixView)
+
+    rollout = helpersContinuous.doRollout(world, policyMatrix, 30)
+    gaussianWeights = helpersContinuous.calculateGaussianWeights(world, rollout)
+
+    print(gaussianWeights)
+
+    #for i in range(numobs-1):
+    #    rollout = helpersContinuous.doRollout(world, policyMatrix, 30)
+    #    stateVectorView += helpersContinuous.createStateVectorView(world, rollout)
 
     ## Reconstruct rewards
-
     
     # initial reward weights
 
-    crewards = np.random.uniform(0.,1.,(N,N))
-    cworld = Gridworld(length=N, noise=p, discount=gamma, rewards=crewards, terminal=terminal)
+    cworld = ContinuousGridworld(length=1.0, stepsize=0.2, discretization=N, noise=p, discount=gamma, rewards=rewards)
     
-    cvalueMatrix, cpolicyMatrix = helpers.doValueIteration(cworld, 1e-3, 1e3)
-    # crollout = helpers.doRolloutNoNoise(cworld, cpolicyMatrix, 2*N-1)
-    crollout = helpers.doRollout(cworld, cpolicyMatrix, 2*N)
-    cstateVectorView = helpers.createStateVectorView(cworld, crollout)
+    cweights = np.random.uniform(0.,1.,(N,N))
+    cworld.setGaussianWeights(cweights)
 
-    #print(cvalueMatrix)
-    #print(cpolicyMatrix)
-    #print(cstateVectorView)
+    cvalueMatrix, cpolicyMatrix = helpersContinuous.doDiscretizedValueIteration(cworld, epsilon, 1e3, noisy=noisy)
 
+    # crollout = helpersContinuous.doRolloutNoNoise(cworld, cpolicyMatrix, 2*N-1)
+    crollout = helpersContinuous.doRollout(cworld, cpolicyMatrix, 30)
+    
+    cgaussianWeights = helpersContinuous.calculateGaussianWeights(cworld, crollout)
+
+    print(cvalueMatrix)
+    print(cpolicyMatrix)
+    print(cgaussianWeights)
 
     ## Start IRL iteration including LP
 
-    cdiff = stateVectorView - cstateVectorView
+    cdiff = gaussianWeights.flatten() - cgaussianWeights.flatten()
     c = cdiff
     A = np.array([-cdiff])
     b = np.zeros(1)
@@ -81,25 +87,24 @@ if __name__ == "__main__":
     for it in range(maxiterations):
 
         print("[IRL] Iteration {}".format(it))
-        #print(c)
         
-        # res = linprog(-c, A_ub=A, b_ub=b, bounds=bounds)
         res = linprog(-c, A_ub=None, b_ub=None, bounds=bounds)
         #print(res)
         
-        crewards = np.transpose(np.reshape(res.x, (N,N)))
-        #crewards = np.reshape(res.x, (N,N))
-        print(crewards)
-        cworld = Gridworld(length=N, noise=p, discount=gamma, rewards=crewards, terminal=terminal)
-        cvalueMatrix, cpolicyMatrix = helpers.doValueIteration(cworld, 1e-3, 1e3)
-        crollout = helpers.doRollout(cworld, cpolicyMatrix, 2*N-1)
-        cstateVectorView = helpers.createStateVectorView(cworld, crollout)
- 
+        #cweights = np.transpose(np.reshape(res.x, (N,N)))
+        cweights = np.reshape(res.x, (N,N))
+        print(cweights)
+        cworld = ContinuousGridworld(length=1.0, stepsize=0.2, discretization=N, noise=p, discount=gamma, rewards=rewards)
+        cworld.setGaussianWeights(cweights)
+
+        cvalueMatrix, cpolicyMatrix = helpersContinuous.doDiscretizedValueIteration(cworld, epsilon, 1e3, noisy=noisy)
+        crollout = helpersContinuous.doRollout(cworld, cpolicyMatrix, 30)
+        cgaussianWeights = helpersContinuous.calculateGaussianWeights(cworld, crollout)
         #print(cvalueMatrix)
         #print(cpolicyMatrix)
         #print(cstateVectorView)
 
-        cdiff = stateVectorView - cstateVectorView
+        cdiff = gaussianWeights.flatten() - cgaussianWeights.flatten()
         cdiff[cdiff < 0] = cdiff[cdiff < 0]*2
         c += cdiff
 
@@ -116,14 +121,17 @@ if __name__ == "__main__":
     print("Expert Policy Matrix")
     print(policyMatrix)
 
-    print("Expert State Vector View")
-    print(stateVectorView)
+    print("Expert Gaussian Weights")
+    print(gaussianWeights)
 
     print("IRL Value Matrix")
     print(cvalueMatrix)
     
     print("IRL Policy Matrix")
     print(cpolicyMatrix)
+  
+    print("Cweights")
+    print(cweights)
     
     print("IRL C")
     print(c)

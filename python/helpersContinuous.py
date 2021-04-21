@@ -1,18 +1,4 @@
 import numpy as np
-from scipy.stats import norm
-
-
-def evaluateGaussianGrid(length, weightsPerDim, position):
-    dx = length/(weightsPerDim-1.)
-    sigma = dx
-    evaluation = np.zeros((weightsPerDim, weightsPerDim))
-    for i in range(weightsPerDim):
-        for j in range(weightsPerDim):
-            x = i*dx
-            y = j*dx
-            evaluation[i,j] = norm.pdf(position[0], x, sigma) * norm.pdf(position[1], y, sigma)
-
-    return evaluation
 
 
 def doDiscretizedValueIteration(gridworld, eps, maxsteps, noisy=False):
@@ -83,6 +69,74 @@ def doDiscretizedValueIteration(gridworld, eps, maxsteps, noisy=False):
         valueMatrix = valueMatrixCopy.copy()
         it += 1
 
+    print("DVI terminated (iterations {}, max abs diff {}".format(it, maxDiffNorm))
     return valueMatrix, policyMatrix
+
+def doRollout(gridworld, policy, maxsteps):
+    gridworld.setPosition(0,0)
+    currentPosition = gridworld.getPosition()
+    stateList = [currentPosition]
+    step = 0
+    while step < maxsteps:
+        x,y = tuple(currentPosition)
+        nx = int(np.round(x*(gridworld.discretization-1)))
+        ny = int(np.round(y*(gridworld.discretization-1)))
+        action = policy[ (nx,ny) ]
+        gridworld.move(action)
+        currentPosition = gridworld.getPosition()
+        stateList.append(currentPosition)
+        step += 1
+
+    return stateList
+
+
+def doRolloutNoNoise(gridworld, policy, maxsteps):
+    noise = gridworld.noise
+    gridworld.noise = 0.0
+    rollout = doRollout(gridworld, policy, maxsteps)
+    gridworld.noise = noise
+    return rollout
+
+
+def createStateVectorView(gridworld, stateList):
+    N = gridworld.discretization
+    gamma = gridworld.discount
+    stateVectorView = np.zeros(N**2)
+    for idx, state in enumerate(stateList):
+        stateIdx = state[0]+state[1]*N
+        stateVectorView[stateIdx] += gamma**idx
+
+    return stateVectorView
+
+
+def createStateMatrixView(gridworld, stateList):
+    N = gridworld.discretization
+    gamma = gridworld.discount
+    stateVectorView = np.zeros((N,N))
+    for idx, state in enumerate(stateList):
+        x,y = tuple(state)
+        stateVectorView[x,y] += gamma**idx
+
+    return stateVectorView
+
+
+def calculateGaussianWeights(gridworld, rollout):
+    N = gridworld.discretization
+    gamma = gridworld.discount
+   
+    Xmat = []
+    for i in range(N):
+        Xmat.append(np.arange(0, N))
+    
+    Xmat = np.array(Xmat)/(N-1)
+    Ymat = np.transpose(Xmat)
+ 
+    sigma = 1.0/N
+    scale = 1.0/(2.0*np.pi*sigma*sigma)
+    weights = np.zeros((N,N))
+    for idx, state in enumerate(rollout):
+        weights += (gamma**idx)*scale*np.exp(-((state[0]-Xmat)/sigma)**2-((state[1]-Ymat)/sigma)**2)
+
+    return weights
 
 

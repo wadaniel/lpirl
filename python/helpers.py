@@ -1,5 +1,4 @@
 import numpy as np
-from scipy.stats import norm
 
 def createSinkReward(gridLength, maxval):
     rewards = np.zeros((gridLength, gridLength))

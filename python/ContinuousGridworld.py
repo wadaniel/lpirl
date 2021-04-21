@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+from scipy.stats import norm
 
 import helpersContinuous
  
@@ -21,16 +22,17 @@ class ContinuousGridworld:
         self.noise = noise
         self.discount = discount
         self.discretization = discretization
-        if length > 0:
+        self.gaussianWeights = None
+        if length == 1.0:
             self.length = length
         else:
-            print("[Gridworld] length must be larger 0, is {}".format(length))
+            print("[ContinuousGridworld] length must be 1.0, is {}".format(length))
 
         rewardShape = rewards.shape
         if rewardShape == (2,2):
             self.rewards = rewards
         else:
-            print("[Gridworld] rewards are of shape {}, but should be (2,2)".format(rewardShape))
+            print("[ContinuousGridworld] rewards are of shape {}, but should be (2,2)".format(rewardShape))
             sys.exit()
   
   
@@ -41,9 +43,12 @@ class ContinuousGridworld:
         self.position = np.array([x, y])
 
     def setGaussianWeights(self, weights):
-        self.gaussianWeights = weights
-
-
+        if weights.shape == (self.discretization, self.discretization):
+            self.gaussianWeights = weights
+        else:
+            print("[ContinuousGridworld] weights are of shape {}, but should be {}".format(weights.shape, (self.discretization, self.discretization)))
+            sys.exit()
+ 
     '''
     @param self: Gridworld instance
     @param action: move direction: 
@@ -54,7 +59,7 @@ class ContinuousGridworld:
     '''
     def move(self, action):
         if action < 0 or action > 3:
-            print("[Gridworld] action is {}, but should be 0, 1, 2 or 3".format(action))
+            print("[ContinuousGridworld] action is {}, but should be 0, 1, 2 or 3".format(action))
         
         if action == 0:
             self.moveLeft()
@@ -68,8 +73,8 @@ class ContinuousGridworld:
         if self.noise > 0:
             ux = np.random.uniform(-self.noise, +self.noise, 1)
             uy = np.random.uniform(-self.noise, +self.noise, 1)
-            self.position += ux
-            self.position += uy
+            self.position[0] += ux
+            self.position[1] += uy
 
         self.position = np.clip(self.position, 0, self.length)
 
@@ -89,10 +94,28 @@ class ContinuousGridworld:
         return getRewardAtPosition(self.position)
   
     def getRewardAtPosition(self, position):
-        if position[0] >= self.rewards[0, 0] and position[0] <= self.rewards[1, 0] and position[1] >= self.rewards[0, 1] and position[1] <= self.rewards[1, 1]:
-                return 1.0
+        if self.gaussianWeights is None:
+            if position[0] >= self.rewards[0, 0] and position[0] <= self.rewards[1, 0] and position[1] >= self.rewards[0, 1] and position[1] <= self.rewards[1, 1]:
+                    return 1.0
+            else:
+                return 0.0
+
         else:
-            return 0.0
+           
+            Xmat = []
+            for i in range(self.discretization):
+                Xmat.append(np.arange(0, self.discretization))
+ 
+            Xmat = np.array(Xmat)/(self.discretization-1)
+            Ymat = np.transpose(Xmat)
+ 
+            sigma = 1.0/self.discretization
+            scale = 1.0/(2.0*np.pi*sigma*sigma)
+            gweights = scale*np.exp(-((position[0]-Xmat)/sigma)**2-((position[1]-Ymat)/sigma)**2)
+
+
+            return np.multiply(gweights, self.gaussianWeights).sum()
+
 
 
     def getProbabilityMatrixAtPosition(self, position):
