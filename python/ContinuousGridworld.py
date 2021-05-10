@@ -41,6 +41,11 @@ class ContinuousGridworld:
        
     def setPosition(self, x, y):
         self.position = np.array([x, y])
+ 
+    def setRandomPosition(self):
+        x = np.random.uniform(0.0, self.length)
+        y = np.random.uniform(0.0, self.length)
+        self.position = np.array([x, y])
 
     def setGaussianWeights(self, weights):
         if weights.shape == (self.discretization, self.discretization):
@@ -91,7 +96,7 @@ class ContinuousGridworld:
         self.position[1] -= self.stepsize
  
     def getReward(self):
-        return getRewardAtPosition(self.position)
+        return self.getRewardAtPosition(self.position)
   
     def getRewardAtPosition(self, position):
         if self.gaussianWeights is None:

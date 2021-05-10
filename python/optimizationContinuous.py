@@ -46,14 +46,14 @@ if __name__ == "__main__":
     print(valueMatrix)
     print(policyMatrix)
 
-    rollout = helpersContinuous.doRollout(world, policyMatrix, 30)
+    rollout, _ = helpersContinuous.doRollout(world, policyMatrix, 30)
     gaussianWeights = helpersContinuous.calculateGaussianWeights(world, rollout)
 
     print(gaussianWeights)
 
-    #for i in range(numobs-1):
-    #    rollout = helpersContinuous.doRollout(world, policyMatrix, 30)
-    #    stateVectorView += helpersContinuous.createStateVectorView(world, rollout)
+    for i in range(numobs-1):
+        rollout, _ = helpersContinuous.doRollout(world, policyMatrix, 30)
+        gaussianWeights += helpersContinuous.calculateGaussianWeights(world, rollout)
 
     ## Reconstruct rewards
     
@@ -67,7 +67,7 @@ if __name__ == "__main__":
     cvalueMatrix, cpolicyMatrix = helpersContinuous.doDiscretizedValueIteration(cworld, epsilon, 1e3, noisy=noisy)
 
     # crollout = helpersContinuous.doRolloutNoNoise(cworld, cpolicyMatrix, 2*N-1)
-    crollout = helpersContinuous.doRollout(cworld, cpolicyMatrix, 30)
+    crollout, _ = helpersContinuous.doRollout(cworld, cpolicyMatrix, 30)
     
     cgaussianWeights = helpersContinuous.calculateGaussianWeights(cworld, crollout)
 
@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     ## Start IRL iteration including LP
 
-    cdiff = gaussianWeights.flatten() - cgaussianWeights.flatten()
+    cdiff = gaussianWeights.flatten() - numobs*cgaussianWeights.flatten()
     c = cdiff
     A = np.array([-cdiff])
     b = np.zeros(1)
@@ -98,13 +98,13 @@ if __name__ == "__main__":
         cworld.setGaussianWeights(cweights)
 
         cvalueMatrix, cpolicyMatrix = helpersContinuous.doDiscretizedValueIteration(cworld, epsilon, 1e3, noisy=noisy)
-        crollout = helpersContinuous.doRollout(cworld, cpolicyMatrix, 30)
+        crollout, _ = helpersContinuous.doRollout(cworld, cpolicyMatrix, 30)
         cgaussianWeights = helpersContinuous.calculateGaussianWeights(cworld, crollout)
         #print(cvalueMatrix)
         #print(cpolicyMatrix)
         #print(cstateVectorView)
 
-        cdiff = gaussianWeights.flatten() - cgaussianWeights.flatten()
+        cdiff = gaussianWeights.flatten() - numobs*cgaussianWeights.flatten()
         cdiff[cdiff < 0] = cdiff[cdiff < 0]*2
         c += cdiff
 
