@@ -90,6 +90,10 @@ if __name__ == "__main__":
 
     k = korali.Engine()
     e = korali.Experiment()
+    
+    ### Fixing the environment
+
+    env = lambda s : worldEnv(s, N)
 
     ### Defining the Cartpole problem's configuration
 
@@ -100,9 +104,6 @@ if __name__ == "__main__":
     e["Problem"]["Policy Testing Episodes"] = 1
     e["Problem"]["Actions Between Policy Updates"] = 1
 
-    print(obsstates)
-    print(obsactions)
-    print(obsfeatures)
     e["Problem"]["Observations"]["States"] = obsstates
     e["Problem"]["Observations"]["Actions"] = obsactions
     e["Problem"]["Observations"]["Features"] = obsfeatures
@@ -115,9 +116,6 @@ if __name__ == "__main__":
 
     e["Variables"][2]["Name"] = "Force"
     e["Variables"][2]["Type"] = "Action"
-#    e["Variables"][2]["Lower Bound"] = -10.0
-#    e["Variables"][2]["Upper Bound"] = +10.0
-#    e["Variables"][2]["Initial Exploration Noise"] = 1.0
 
     ### Defining Agent Configuration 
 
@@ -142,10 +140,10 @@ if __name__ == "__main__":
     ### IRL related configuration
 
     e["Solver"]["Experiences Between Reward Updates"] = 1
-    e["Solver"]["Rewardfunction Learning Rate"] = 1e-4
+    e["Solver"]["Rewardfunction Learning Rate"] = 1e-5
     e["Solver"]["Demonstration Batch Size"] = 10
     e["Solver"]["Background Batch Size"] = 20
-    e["Solver"]["Use Fusion Distribution"] = False
+    e["Solver"]["Use Fusion Distribution"] = True
     e["Solver"]["Experiences Between Partition Function Statistics"] = 1e5
 
     ### Configuring the neural network and its hidden layers
@@ -167,13 +165,13 @@ if __name__ == "__main__":
 
     ### Defining Termination Criteria
 
-    e["Solver"]["Termination Criteria"]["Max Experiences"] = 10e6
+    e["Solver"]["Termination Criteria"]["Max Experiences"] = 1e6
 
     ### Setting file output configuration
 
     e["File Output"]["Enabled"] = True
     e["File Output"]["Frequency"] = 10000
-    e["File Output"]["Path"] = '_korali_results_discrete'
+    e["File Output"]["Path"] = '_korali_results_discrete_15'
 
     ### Running Experiment
 

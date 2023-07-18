@@ -7,7 +7,6 @@ from ContinuousGridworld import *
 
 length = 1.0
 stepsize = 0.2
-discretization = 15
 noise = 0.1
 
 ## irrelevant but required
@@ -16,13 +15,14 @@ rewards = np.array([[0.8, 0.8], [1.0, 1.0]])
 
 ######## Defining Environment Storage
 
-world = ContinuousGridworld(length=1.0, stepsize=0.2, discretization=discretization, noise=noise, discount=discount, rewards=rewards)
 
 maxSteps = 30
 
-def env(s):
+def worldEnv(s, discretization):
 
+ world = ContinuousGridworld(length=length, stepsize=stepsize, discretization=discretization, noise=noise, discount=discount, rewards=rewards)
  # Initializing environment
+ 
  world.setRandomPosition()
  s["State"] = world.getPosition().tolist()
  step = 0
