@@ -32,38 +32,33 @@ if __name__ == "__main__":
 
     # create rewards
 
-    rewards, terminal = helpers.createSinkReward(N, 1)
-
-    print(rewards)
-    print(terminal)
-    
+    #rewards, terminal = helpers.createSinkReward(N, 1)
+    rewards, terminal = helpers.createDoubleSinkReward(N, 1)
+   
     # find optimal policy
 
     world = Gridworld(length=N, noise=p, discount=gamma, rewards=rewards, terminal=terminal)
     valueMatrix, policyMatrix = helpers.doValueIteration(world, epsilon, 1e4)
 
-    print(valueMatrix)
-    print(policyMatrix)
     helpers.printPolicyMatrix(policyMatrix)
 
-    exit()
- 
     #rollout = helpers.doRolloutNoNoise(world, policyMatrix, 2*N-1)
-    rollout = helpers.doRollout(world, policyMatrix, 2*N-1)
+    rollout = helpers.doRollout(world, policyMatrix, N**2)
     stateVectorView = helpers.createStateVectorView(world, rollout)
     stateMatrixView = helpers.createStateMatrixView(world, rollout)
  
-    for i in range(numobs-1):
-        rollout = helpers.doRollout(world, policyMatrix, 2*N-1)
+    for i in range(1, numobs):
+        rollout = helpers.doRollout(world, policyMatrix, N**2)
         stateVectorView += helpers.createStateVectorView(world, rollout)
- 
-    print(valueMatrix)
-    print(policyMatrix)
-    print(stateVectorView)
-    print(stateMatrixView)
+
+    #print(rewards)
+    #print(terminal)
+    #print(valueMatrix)
+    #print(policyMatrix)
+    #print(stateVectorView)
+    #print(stateMatrixView)
 
     ## Reconstruct rewards
-
     
     # initial reward weights
 
@@ -72,7 +67,7 @@ if __name__ == "__main__":
     
     cvalueMatrix, cpolicyMatrix = helpers.doValueIteration(cworld, epsilon, 1e3)
     # crollout = helpers.doRolloutNoNoise(cworld, cpolicyMatrix, 2*N-1)
-    crollout = helpers.doRollout(cworld, cpolicyMatrix, 2*N)
+    crollout = helpers.doRollout(cworld, cpolicyMatrix, N**2)
     cstateVectorView = helpers.createStateVectorView(cworld, crollout)
 
     #print(cvalueMatrix)
@@ -104,14 +99,21 @@ if __name__ == "__main__":
         #print(crewards)
         cworld = Gridworld(length=N, noise=p, discount=gamma, rewards=crewards, terminal=terminal)
         cvalueMatrix, cpolicyMatrix = helpers.doValueIteration(cworld, epsilon, 1e3)
-        crollout = helpers.doRollout(cworld, cpolicyMatrix, 2*N-1)
+        crollout = helpers.doRollout(cworld, cpolicyMatrix, N**2)
         cstateVectorView = helpers.createStateVectorView(cworld, crollout)
+
+        for i in range(1, numobs):
+            crollout = helpers.doRollout(cworld, cpolicyMatrix, N**2)
+            cstateVectorView += helpers.createStateVectorView(cworld, crollout)
+            #rollout = helpers.doRollout(world, policyMatrix, N**2)
+            #stateVectorView += helpers.createStateVectorView(world, rollout)
  
         #print(cvalueMatrix)
         #print(cpolicyMatrix)
         #print(cstateVectorView)
 
-        cdiff = stateVectorView - numobs*cstateVectorView
+        #cdiff = stateVectorView - numobs*cstateVectorView
+        cdiff = stateVectorView - cstateVectorView
         cdiff[cdiff < 0] = cdiff[cdiff < 0]*2
         c += cdiff
 
@@ -127,6 +129,7 @@ if __name__ == "__main__":
 
     print("Expert Policy Matrix")
     print(policyMatrix)
+    helpers.printPolicyMatrix(policyMatrix)
 
     print("Expert State Vector View")
     print(stateVectorView)

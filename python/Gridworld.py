@@ -47,6 +47,8 @@ class Gridworld:
     def setPosition(self, x, y):
         self.position = np.array([x, y])
 
+    def setRandomPosition(self):
+        self.position = np.random.randint(0,self.length-1,2)
     '''
     @param self: Gridworld instance
     @param action: move direction: 
@@ -70,7 +72,7 @@ class Gridworld:
             self.moveRight()
         elif action == 2:
             self.moveUp()
-        else:
+        elif action == 3:
             self.moveDown()
 
     def moveLeft(self):

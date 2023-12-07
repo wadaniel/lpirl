@@ -10,21 +10,21 @@ def createSinkReward(gridLength, maxval):
 def createDoubleSinkReward(gridLength, maxval):
     rewards = np.zeros((gridLength, gridLength))
     rewards[gridLength-1, gridLength-1] = maxval
-    rewards[0, 0] = maxval
+    rewards[gridLength-1, 0] = maxval
     terminal = np.zeros((gridLength, gridLength))
     terminal[gridLength-1, gridLength-1] = 1
-    terminal[0, 0] = 1
+    terminal[gridLength-1, 0] = 1
     return rewards, terminal
 
 def createTripleSinkReward(gridLength, maxval):
     rewards = np.zeros((gridLength, gridLength))
     rewards[gridLength-1, gridLength-1] = maxval
     rewards[gridLength-1, 0] = maxval
-    rewards[0, 0] = maxval
+    rewards[0, gridLength-1] = maxval
     terminal = np.zeros((gridLength, gridLength))
     terminal[gridLength-1, gridLength-1] = 1
     terminal[gridLength-1, 0] = 1
-    terminal[0, 0] = 1
+    terminal[0, gridLength-1] = 1
     return rewards, terminal
 
 def doValueIteration(gridworld, eps, maxsteps, noisy=False):
@@ -108,7 +108,8 @@ def doValueIteration(gridworld, eps, maxsteps, noisy=False):
 
 
 def doRollout(gridworld, policy, maxsteps):
-    gridworld.setPosition(0,0)
+    #gridworld.setPosition(0,0)
+    gridworld.setRandomPosition()
     isTerminal = gridworld.isTerminal()
     currentPosition = gridworld.getPosition()
     stateList = [currentPosition]
