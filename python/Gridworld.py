@@ -74,20 +74,20 @@ class Gridworld:
             self.moveDown()
 
     def moveLeft(self):
-        if self.position[0] > 0:
-            self.position[0] -= 1
+        if self.position[1] > 0:
+            self.position[1] -= 1
  
     def moveRight(self):
-        if self.position[0] < self.length-1:
-            self.position[0] += 1
-    
-    def moveUp(self):
         if self.position[1] < self.length-1:
             self.position[1] += 1
     
+    def moveUp(self):
+        if self.position[0] > 0:
+            self.position[0] -= 1
+    
     def moveDown(self):
-        if self.position[1] > 0:
-            self.position[1] -= 1
+        if self.position[0] < self.length-1:
+            self.position[0] += 1
  
     def getReward(self):
         reward = self.rewards[tuple(self.position)]

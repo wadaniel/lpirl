@@ -7,6 +7,25 @@ def createSinkReward(gridLength, maxval):
     terminal[gridLength-1, gridLength-1] = 1
     return rewards, terminal
 
+def createDoubleSinkReward(gridLength, maxval):
+    rewards = np.zeros((gridLength, gridLength))
+    rewards[gridLength-1, gridLength-1] = maxval
+    rewards[0, 0] = maxval
+    terminal = np.zeros((gridLength, gridLength))
+    terminal[gridLength-1, gridLength-1] = 1
+    terminal[0, 0] = 1
+    return rewards, terminal
+
+def createTripleSinkReward(gridLength, maxval):
+    rewards = np.zeros((gridLength, gridLength))
+    rewards[gridLength-1, gridLength-1] = maxval
+    rewards[gridLength-1, 0] = maxval
+    rewards[0, 0] = maxval
+    terminal = np.zeros((gridLength, gridLength))
+    terminal[gridLength-1, gridLength-1] = 1
+    terminal[gridLength-1, 0] = 1
+    terminal[0, 0] = 1
+    return rewards, terminal
 
 def doValueIteration(gridworld, eps, maxsteps, noisy=False):
     N = gridworld.length
@@ -39,11 +58,10 @@ def doValueIteration(gridworld, eps, maxsteps, noisy=False):
                 else:
                     
                     # Positions
-
-                    leftPosition = tuple(np.clip(np.array([x-1,y]), 0, N-1))
-                    rightPosition = tuple(np.clip(np.array([x+1,y]), 0, N-1))
-                    upPosition = tuple(np.clip(np.array([x,y+1]), 0, N-1))
-                    downPosition = tuple(np.clip(np.array([x,y-1]), 0, N-1))
+                    leftPosition = tuple(np.clip(np.array([x,y-1]), 0, N-1))
+                    rightPosition = tuple(np.clip(np.array([x,y+1]), 0, N-1))
+                    upPosition = tuple(np.clip(np.array([x-1,y]), 0, N-1))
+                    downPosition = tuple(np.clip(np.array([x+1,y]), 0, N-1))
                 
                     # Current Reward
 
@@ -85,6 +103,7 @@ def doValueIteration(gridworld, eps, maxsteps, noisy=False):
         valueMatrix = valueMatrixCopy.copy()
         it += 1
 
+    print(f"Terminate with {it}/{maxsteps} iterations and norm {maxDiffNorm}/{eps}")
     return valueMatrix, policyMatrix
 
 
@@ -132,3 +151,23 @@ def createStateMatrixView(gridworld, stateList):
         stateVectorView[x,y] += gamma**idx
 
     return stateVectorView
+
+def printPolicyMatrix(policy):
+    N1, N2 = policy.shape
+    charPolicy = np.full((N1,N2),'.')
+
+    for i in range(N1):
+        for j in range(N2):
+            if policy[i,j] == 0:
+                charPolicy[i,j] = '<'
+
+            elif policy[i,j] == 1:
+                charPolicy[i,j] = '>'
+
+            elif policy[i,j] == 2:
+                charPolicy[i,j] = '^'
+
+            elif policy[i,j] == 3:
+                charPolicy[i,j] = 'v'
+
+    print(charPolicy)

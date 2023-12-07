@@ -10,10 +10,10 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--iteration', type=int, default=1, help='number irl iterations')
-    parser.add_argument('--length', type=int, default=5, help='length of Gridworld')
-    parser.add_argument('--discount', type=float, default=0.99, help='discount factor')
+    parser.add_argument('--length', type=int, default=8, help='length of Gridworld')
+    parser.add_argument('--discount', type=float, default=0.95, help='discount factor')
     parser.add_argument('--epsilon', type=float, default=1e-3, help='accuracy of value iteration')
-    parser.add_argument('--noise', type=float, default=0.3, help='action noise')
+    parser.add_argument('--noise', type=float, default=0.2, help='probability of random action')
     parser.add_argument('--numobs', type=int, default=1, help='number observed expert trajectories')
     parser.add_argument('--seed', type=int, default=1337, help='random seed')
 
@@ -33,11 +33,20 @@ if __name__ == "__main__":
     # create rewards
 
     rewards, terminal = helpers.createSinkReward(N, 1)
+
+    print(rewards)
+    print(terminal)
     
     # find optimal policy
 
     world = Gridworld(length=N, noise=p, discount=gamma, rewards=rewards, terminal=terminal)
     valueMatrix, policyMatrix = helpers.doValueIteration(world, epsilon, 1e4)
+
+    print(valueMatrix)
+    print(policyMatrix)
+    helpers.printPolicyMatrix(policyMatrix)
+
+    exit()
  
     #rollout = helpers.doRolloutNoNoise(world, policyMatrix, 2*N-1)
     rollout = helpers.doRollout(world, policyMatrix, 2*N-1)
@@ -83,7 +92,7 @@ if __name__ == "__main__":
 
     for it in range(maxiterations):
 
-        print("[IRL] Iteration {}".format(it))
+        #print("[IRL] Iteration {}".format(it))
         #print(c)
         
         # res = linprog(-c, A_ub=A, b_ub=b, bounds=bounds)
@@ -92,7 +101,7 @@ if __name__ == "__main__":
         
         crewards = np.transpose(np.reshape(res.x, (N,N)))
         #crewards = np.reshape(res.x, (N,N))
-        print(crewards)
+        #print(crewards)
         cworld = Gridworld(length=N, noise=p, discount=gamma, rewards=crewards, terminal=terminal)
         cvalueMatrix, cpolicyMatrix = helpers.doValueIteration(cworld, epsilon, 1e3)
         crollout = helpers.doRollout(cworld, cpolicyMatrix, 2*N-1)
@@ -127,6 +136,7 @@ if __name__ == "__main__":
     
     print("IRL Policy Matrix")
     print(cpolicyMatrix)
+    helpers.printPolicyMatrix(cpolicyMatrix)
     
     print("IRL C")
     print(c)
