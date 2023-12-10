@@ -103,13 +103,15 @@ def doValueIteration(gridworld, eps, maxsteps, noisy=False):
         valueMatrix = valueMatrixCopy.copy()
         it += 1
 
-    print(f"Terminate with {it}/{maxsteps} iterations and norm {maxDiffNorm}/{eps}")
+    print(f"Value Iteration terminated with {it}/{maxsteps} iterations and norm {maxDiffNorm}/{eps}")
     return valueMatrix, policyMatrix
 
 
-def doRollout(gridworld, policy, maxsteps):
-    #gridworld.setPosition(0,0)
-    gridworld.setRandomPosition()
+def doRollout(gridworld, policy, maxsteps, initPos=None):
+    if initPos is None:
+        gridworld.setRandomPosition()
+    else:
+        gridworld.setPosition(*initPos)
     isTerminal = gridworld.isTerminal()
     currentPosition = gridworld.getPosition()
     stateList = [currentPosition]
@@ -123,7 +125,7 @@ def doRollout(gridworld, policy, maxsteps):
         stateList.append(currentPosition)
         step += 1
 
-    return stateList
+    return np.array(stateList)
 
 def doRolloutNoNoise(gridworld, policy, maxsteps):
     noise = gridworld.noise
