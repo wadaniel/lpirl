@@ -6,13 +6,14 @@ import numpy as np
 
 fdir = 'figures'
 fileName = './output/optimization.npz'
+facecolor = 'white'
 
 arrows = {-1:(0,0), 1:(1,0), 0:(-1,0),2:(0,1),3:(0,-1)}
 
 def plotPolicy(polMat, terminal, fname, truePolMat=None):
     scale = 0.25
 
-    fig, ax = plt.subplots(figsize=(6, 6))
+    fig, ax = plt.subplots(figsize=(6, 6), facecolor=facecolor)
     for r, row in enumerate(polMat):
         for c, cell in enumerate(row):
             if terminal[r,c] == 0:
@@ -91,14 +92,15 @@ col=sns.light_palette("seagreen", as_cmap=True)
 #rolloutPlot(rollouts)
 #exit()
 
-convergencePlots(crewards, cvalues, cpolicies, errors, terminal, polMat)
 
+plt.figure(facecolor=facecolor)
 sns.heatmap(rewards, linewidths=1.0, square=True, cmap=col, cbar=False)
 plt.xticks([])
 plt.yticks([])
 plt.savefig(f'{fdir}/rewards.pdf')
 plt.close()
 
+plt.figure(facecolor=facecolor)
 sns.heatmap(valMat, linewidths=1.0, square=True, cmap=col)
 plt.xticks([])
 plt.yticks([])
@@ -107,6 +109,7 @@ plt.close()
 
 plotPolicy(polMat, terminal, 'polMat')
 
+convergencePlots(crewards, cvalues, cpolicies, errors, terminal, polMat)
 """
 sns.heatmap(crewMat, linewidths=1.0, square=True, cmap=col)
 plt.savefig(f'{fdir}/crefMat.pdf')

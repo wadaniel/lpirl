@@ -9,7 +9,7 @@ import argparse
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--iteration', type=int, default=1, help='number irl iterations')
+    parser.add_argument('--iteration', type=int, default=100, help='number irl iterations')
     parser.add_argument('--length', type=int, default=8, help='length of Gridworld')
     parser.add_argument('--discount', type=float, default=0.95, help='discount factor')
     parser.add_argument('--epsilon', type=float, default=1e-3, help='accuracy of value iteration')
@@ -126,7 +126,7 @@ if __name__ == "__main__":
  
         #cdiff = stateVectorView - numobs*cstateVectorView
         cdiff = stateVectorView - cstateVectorView
-        cdiff[cdiff < 0] = cdiff[cdiff < 0]*2
+        cdiff[cdiff < 0] = pFactor*cdiff[cdiff < 0]
         c += cdiff
 
         crewards.append(crewardMatrix)
